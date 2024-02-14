@@ -107,7 +107,7 @@ function addMarkerWithCircle(e) {
     }, 50); // Intervalo de actualización del radio (ms)
 
     // Dejar de actualizar el radio del círculo cuando se suelta el clic
-    map.on("mouseup", function () {
+    map.on("mouseup touchend", function () {
         console.log("Mouseup detected."); // Mensaje de depuración para mostrar cuando se suelta el clic
         isDrawing = false; // Indica que se ha terminado de dibujar
         clearInterval(updateRadiusInterval); // Detener la actualización del radio
@@ -115,7 +115,7 @@ function addMarkerWithCircle(e) {
     });
 }
 
-map.on("mousedown", function (e) {
+map.on("mousedown touchstart", function (e) {
     if (!isDrawing) {
         addMarkerWithCircle(e); // Agrega un marcador con círculo al hacer clic en el mapa
     }
