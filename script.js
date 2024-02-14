@@ -12,6 +12,12 @@ var userMarker;
 var markers = []; // Array para almacenar los marcadores creados
 var zoom = 17; // Nivel de zoom inicial del mapa
 
+
+document.body.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+  }); 
+
+
 function initializeMap(position) {
     map.setView([position.coords.latitude, position.coords.longitude], zoom);
 
@@ -74,6 +80,43 @@ watchPositionId = navigator.geolocation.watchPosition(
     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
 );
 
+
+
+
+
+
+
+//  SIMULAR EVENTOS DE RATÓN PARA EVENTOS TÁCTILES YA QUE MAP. ON NO SOPORTA LOS EVENTOS TÁCTILES
+function simulateMouseEvent(event, simulatedType) {
+    // Si el evento original es un evento táctil, cambia las coordenadas del evento
+    if (event.touches) {
+        var touch = event.changedTouches[0];
+        var simulatedEvent = new MouseEvent(simulatedType, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            screenX: touch.screenX,
+            screenY: touch.screenY,
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+        });
+        event.target.dispatchEvent(simulatedEvent);
+        event.preventDefault();
+    }
+}
+
+document.addEventListener("touchstart", function (e) {
+    console.log("Touchstart detected."); // Mensaje de depuración para mostrar cuando se toca la pantalla
+    simulateMouseEvent(e, "mousedown");
+});
+
+document.addEventListener("touchend", function (e) {
+    console.log("Touchend detected."); // Mensaje de depuración para mostrar cuando se levanta el dedo de la pantalla
+    simulateMouseEvent(e, "mouseup");
+});
+
+// El resto de tu código sigue aquí...
+
 // ACTIONS
 // add marker on click
 var isDrawing = false; // Variable para indicar si se está dibujando un marcador con círculo
@@ -103,23 +146,22 @@ function addMarkerWithCircle(e) {
         var timeDiff = Date.now() - startDrawTime; // Tiempo transcurrido desde que se inició el dibujo
         var radius = initialVelocity * timeDiff + accelerationFactor * Math.pow(timeDiff, 2); // Calcular el nuevo radio con aceleración
         circle.setRadius(radius); // Actualizar el radio del círculo
-        accelerationFactor *= 1.05; // Aumentar el factor de aceleración
+        accelerationFactor *= 1.05; // Aumentar el factor de aceleración para hacerlo "exponencial" - se siente más natural
     }, 50); // Intervalo de actualización del radio (ms)
 
     // Dejar de actualizar el radio del círculo cuando se suelta el clic
-    map.on("mouseup touchend", function () {
+    map.on("mouseup", function () {
         console.log("Mouseup detected."); // Mensaje de depuración para mostrar cuando se suelta el clic
         isDrawing = false; // Indica que se ha terminado de dibujar
         clearInterval(updateRadiusInterval); // Detener la actualización del radio
         accelerationFactor = INITIAL_ACC_FACTOR; // Restablecer el factor de aceleración
-    });
+    }, { passive: false });
 }
 
-map.on("mousedown touchstart", function (e) {
+map.on("mousedown", function (e) {
     if (!isDrawing) {
         addMarkerWithCircle(e); // Agrega un marcador con círculo al hacer clic en el mapa
     }
-});
-
+},  { passive: false });
 
 console.log("script.js loaded!");
