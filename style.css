@@ -1,0 +1,9 @@
+#header {
+    height: 5%;
+}
+
+#map {
+    height: 95%;
+    width: 100%;
+    position: absolute;
+}
