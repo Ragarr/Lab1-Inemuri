@@ -1,28 +1,19 @@
 // init position of the map
-var map;
+var map = L.map("map");
 // Crear un marcador con un icono personalizado
 var userIcon = L.icon({
-  iconUrl: "media/current-location-1.svg",
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -40],
+    iconUrl: "media/current-location-1.svg",
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
 });
 
 var userMarker;
-
-
-
-
-
-
-
-
+var markers = []; // Array para almacenar los marcadores creados
+var zoom = 17; // Nivel de zoom inicial del mapa
 
 function initializeMap(position) {
-    map = L.map("map").setView(
-        [position.coords.latitude, position.coords.longitude],
-        19
-    );
+    map.setView([position.coords.latitude, position.coords.longitude], zoom);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
@@ -48,7 +39,7 @@ function drawUserIcon(position) {
     }
 
     // Centrar el mapa en la nueva ubicación
-    map.setView([lat, lon], 10);
+    map.setView([lat, lon], zoom);
 }
 
 // Inicializar el mapa con la ubicación actual
@@ -82,3 +73,53 @@ watchPositionId = navigator.geolocation.watchPosition(
     onPositionError,
     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
 );
+
+// ACTIONS
+// add marker on click
+var isDrawing = false; // Variable para indicar si se está dibujando un marcador con círculo
+var circle; // Variable para almacenar el círculo que se está dibujando
+var startDrawTime; // Tiempo de inicio de dibujo
+var initialVelocity = 0.000005; // Velocidad inicial de crecimiento del radio
+const INITIAL_ACC_FACTOR = 0.00005; // Factor de aceleración inicial
+var accelerationFactor = INITIAL_ACC_FACTOR; // Factor de aceleración
+// Función para dibujar un marcador con un círculo alrededor
+function addMarkerWithCircle(e) {
+    console.log("Mousedown detected."); // Mensaje de depuración para mostrar cuando se hace clic
+    var marker = L.marker(e.latlng).addTo(map); // Crea un marcador en la posición del clic
+
+    var initialRadius = 0; // Radio inicial del círculo
+    circle = L.circle(e.latlng, {
+        color: "blue", // Color del borde del círculo
+        fillColor: "#3388ff", // Color de relleno del círculo
+        fillOpacity: 0.3, // Opacidad del relleno
+        radius: initialRadius, // Radio inicial del círculo
+    }).addTo(map);
+
+    startDrawTime = Date.now(); // Guardar el tiempo de inicio del dibujo
+    isDrawing = true; // Indica que se está dibujando
+
+    // Actualizar el radio del círculo mientras se mantiene pulsado el clic
+    var updateRadiusInterval = setInterval(function () {
+        var timeDiff = Date.now() - startDrawTime; // Tiempo transcurrido desde que se inició el dibujo
+        var radius = initialVelocity * timeDiff + accelerationFactor * Math.pow(timeDiff, 2); // Calcular el nuevo radio con aceleración
+        circle.setRadius(radius); // Actualizar el radio del círculo
+        accelerationFactor *= 1.05; // Aumentar el factor de aceleración
+    }, 50); // Intervalo de actualización del radio (ms)
+
+    // Dejar de actualizar el radio del círculo cuando se suelta el clic
+    map.on("mouseup", function () {
+        console.log("Mouseup detected."); // Mensaje de depuración para mostrar cuando se suelta el clic
+        isDrawing = false; // Indica que se ha terminado de dibujar
+        clearInterval(updateRadiusInterval); // Detener la actualización del radio
+        accelerationFactor = INITIAL_ACC_FACTOR; // Restablecer el factor de aceleración
+    });
+}
+
+map.on("mousedown", function (e) {
+    if (!isDrawing) {
+        addMarkerWithCircle(e); // Agrega un marcador con círculo al hacer clic en el mapa
+    }
+});
+
+
+console.log("script.js loaded!");
