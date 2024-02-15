@@ -141,7 +141,7 @@ function inverseLogslider(value) {
     let minp = 0;
     let maxp = 100;
     let minv = Math.log(100);
-    let maxv = Math.log(100000);
+    let maxv = Math.log(10000);
     let scale = (maxv - minv) / (maxp - minp);
 
     // Calcular la posición inversa
@@ -224,17 +224,32 @@ function vibrate(circle, userPosition) {
     // vibra cada vez mas en funcion de la distancia al centro del circulo
     // vibracion minima cuando el usuario esta en el borde del circulo
     // vibracion maxima cuando el usuario esta a un 90% el centro del circulo
+    vibratePatterns = {
+        far: [100, 200],
+        medium: [100, 100, 100, 100],
+        close: [200, 100, 200, 100],
+        veryClose: [200, 50, 200, 50],
+
+    };
+
     let distance = userPosition.distanceTo(circle.getLatLng());
     let maxDistance = circle.getRadius() * 0.9;
     let minDistance = circle.getRadius() * 0.1;
-    let vibration = 0;
-    if (distance < minDistance) {
-        vibration = 0;
-    } else if (distance > maxDistance) {
-        vibration = 1000;
-    } else {
-        vibration = 1000 * (1 - (distance - minDistance) / (maxDistance - minDistance));
+    let relDistance = distance / circle.getRadius();
+    console.log("distancia al circulo: " + distance);
+    console.log("distancia relativa al circulo: " + relDistance);
+
+    if (relDistance < 0.25) {
+        vibration = vibratePatterns.veryClose;
     }
-    console.log("vibrando");
+    else if (relDistance < 0.5) {
+        vibration = vibratePatterns.close;
+    }
+    else if (relDistance < 0.75) {
+        vibration = vibratePatterns.medium;
+    }
+    else {
+        vibration = vibratePatterns.far;
+    }
     navigator.vibrate(vibration);
 }
