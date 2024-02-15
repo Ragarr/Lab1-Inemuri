@@ -1,4 +1,8 @@
-// init position of the map
+
+
+/*
+INICIALIZACIÓN DEL MAPA Y UBICACIÓN DEL USUARIO
+*/
 var map = L.map("map");
 // Crear un marcador con un icono personalizado
 var userIcon = L.icon({
@@ -10,12 +14,8 @@ var userIcon = L.icon({
 
 var userMarker;
 var markers = []; // Array para almacenar los marcadores creados
+
 var zoom = 17; // Nivel de zoom inicial del mapa
-
-
-document.body.addEventListener('touchmove', function(event) {
-    event.preventDefault();
-  }); 
 
 
 function initializeMap(position) {
@@ -27,9 +27,25 @@ function initializeMap(position) {
             '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 }
+
 function onPositionError(error) {
     console.error("Error getting position: ", error, error.message);
 }
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(initializeMap, onPositionError, {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+    });
+} else {
+    alert("Geolocation is not supported by this browser.");
+}
+
+/* 
+DIBUJO DEL ICONO DEL USUARIO Y TRACK DE SU UBICACIÓN
+*/
+
 
 function drawUserIcon(position) {
     var lat = position.coords.latitude;
@@ -48,31 +64,6 @@ function drawUserIcon(position) {
     map.setView([lat, lon], zoom);
 }
 
-// Inicializar el mapa con la ubicación actual
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(initializeMap, onPositionError, {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-    });
-} else {
-    alert("Geolocation is not supported by this browser.");
-}
-
-if ("DeviceOrientationEvent" in window) {
-    window.addEventListener(
-        "deviceorientation",
-        function (event) {
-            var alpha = event.alpha; // Valor de orientación en grados
-        },
-        false
-    );
-} else {
-    console.log(
-        "La API de orientación del dispositivo no es compatible con este navegador."
-    );
-}
-
 // Usar la función drawUserIcon en watchPosition
 watchPositionId = navigator.geolocation.watchPosition(
     drawUserIcon,
@@ -80,88 +71,114 @@ watchPositionId = navigator.geolocation.watchPosition(
     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
 );
 
-
-
-
-
-
-
-//  SIMULAR EVENTOS DE RATÓN PARA EVENTOS TÁCTILES YA QUE MAP. ON NO SOPORTA LOS EVENTOS TÁCTILES
-function simulateMouseEvent(event, simulatedType) {
-    // Si el evento original es un evento táctil, cambia las coordenadas del evento
-    if (event.touches) {
-        var touch = event.changedTouches[0];
-        var simulatedEvent = new MouseEvent(simulatedType, {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            screenX: touch.screenX,
-            screenY: touch.screenY,
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-        });
-        event.target.dispatchEvent(simulatedEvent);
-        event.preventDefault();
-    }
-}
-
-document.addEventListener("touchstart", function (e) {
-    console.log("Touchstart detected."); // Mensaje de depuración para mostrar cuando se toca la pantalla
-    simulateMouseEvent(e, "mousedown");
+/*
+CONTROL DEL ZOOM
+para que no se reinicie el zoom al cambiar de ubicación
+*/
+map.on("zoomend", function () {
+    zoom = map.getZoom();
 });
 
-document.addEventListener("touchend", function (e) {
-    console.log("Touchend detected."); // Mensaje de depuración para mostrar cuando se levanta el dedo de la pantalla
-    simulateMouseEvent(e, "mouseup");
-});
 
-// El resto de tu código sigue aquí...
+/*
+DESHABILITAR ZOOM CON DOBLE CLIC
+*/
+map.doubleClickZoom.disable();
 
-// ACTIONS
-// add marker on click
-var isDrawing = false; // Variable para indicar si se está dibujando un marcador con círculo
-var circle; // Variable para almacenar el círculo que se está dibujando
-var startDrawTime; // Tiempo de inicio de dibujo
-var initialVelocity = 0.000005; // Velocidad inicial de crecimiento del radio
-const INITIAL_ACC_FACTOR = 0.00005; // Factor de aceleración inicial
-var accelerationFactor = INITIAL_ACC_FACTOR; // Factor de aceleración
-// Función para dibujar un marcador con un círculo alrededor
-function addMarkerWithCircle(e) {
-    console.log("Mousedown detected."); // Mensaje de depuración para mostrar cuando se hace clic
-    var marker = L.marker(e.latlng).addTo(map); // Crea un marcador en la posición del clic
 
-    var initialRadius = 0; // Radio inicial del círculo
-    circle = L.circle(e.latlng, {
-        color: "blue", // Color del borde del círculo
-        fillColor: "#3388ff", // Color de relleno del círculo
-        fillOpacity: 0.3, // Opacidad del relleno
-        radius: initialRadius, // Radio inicial del círculo
+/*
+
+AÑADIR Y ELIMINAR MARCADORES
+FUNCIONAMIENTO:
+1. Al hacer doble clic en el mapa, se añade un marcador en la ubicación seleccionada.
+2. Se crea un circulo alrededor del marcador
+2. Al hacer clic en el radio exterior del circulo permite cambiar el radio del círculo con un popup 
+4. se añade un evento de clic al marcador para eliminarlo
+*/
+
+// constantes
+const DEFAULT_RADIUS = 100; // radio por defecto del círculo
+
+
+
+// detectar dobleclic en el mapa
+map.on("dblclick", function (event) {
+    var lat = event.latlng.lat;
+    var lon = event.latlng.lng;
+    console.log(lat, lon);
+
+    var marker = L.marker([lat, lon]).addTo(map);
+    markers.push(marker);
+    // Crear un círculo alrededor del marcador
+    var circle = L.circle([lat, lon], {
+        color: "red",
+        fillColor: "#f03",
+        fillOpacity: 0.5,
+        radius: DEFAULT_RADIUS,
     }).addTo(map);
+    // Añadir evento de clic al marcador para eliminarlo
+    marker.on("click", function () {
+        map.removeLayer(marker);
+        map.removeLayer(circle);
+        markers = markers.filter(function (m) {
+            return m !== marker;
+        });
+    });
+    circle.on("click", function () {
+        console.log("click en el círculo");
+        var popup = L.popup()
+            .setLatLng([lat, lon])
+            .setContent(
+                '<input type="range" id="radius" value="' +
+                inverseLogslider(circle.getRadius()) +
+                '" min="0" max="100"><label for="radius">Radio: </label><span id="radius-value">' + getDistanceUnits(circle.getRadius()) +'</span>'
+            ).openOn(map);
+        // Añadir evento de input al selector de rango del popup
+        document.getElementById("radius").addEventListener("input", function () {
+            var inputValue = document.getElementById("radius").value;
+            var newRadius = parseInt(logslider(inputValue));
+            document.getElementById("radius-value").innerText = getDistanceUnits(newRadius);
+            circle.setRadius(newRadius);
+        });
+    });
 
-    startDrawTime = Date.now(); // Guardar el tiempo de inicio del dibujo
-    isDrawing = true; // Indica que se está dibujando
-
-    // Actualizar el radio del círculo mientras se mantiene pulsado el clic
-    var updateRadiusInterval = setInterval(function () {
-        var timeDiff = Date.now() - startDrawTime; // Tiempo transcurrido desde que se inició el dibujo
-        var radius = initialVelocity * timeDiff + accelerationFactor * Math.pow(timeDiff, 2); // Calcular el nuevo radio con aceleración
-        circle.setRadius(radius); // Actualizar el radio del círculo
-        accelerationFactor *= 1.05; // Aumentar el factor de aceleración para hacerlo "exponencial" - se siente más natural
-    }, 50); // Intervalo de actualización del radio (ms)
-
-    // Dejar de actualizar el radio del círculo cuando se suelta el clic
-    map.on("mouseup", function () {
-        console.log("Mouseup detected."); // Mensaje de depuración para mostrar cuando se suelta el clic
-        isDrawing = false; // Indica que se ha terminado de dibujar
-        clearInterval(updateRadiusInterval); // Detener la actualización del radio
-        accelerationFactor = INITIAL_ACC_FACTOR; // Restablecer el factor de aceleración
-    }, { passive: false });
+});
+function logslider(position) {
+    // position will be between 0 and 100
+    var minp = 0;
+    var maxp = 100;
+  
+    // The result should be between 100 an 100.000
+    var minv = Math.log(100);
+    var maxv = Math.log(100000);
+  
+    // calculate adjustment factor
+    var scale = (maxv-minv) / (maxp-minp);
+  
+    return Math.exp(minv + scale*(position-minp));
 }
 
-map.on("mousedown", function (e) {
-    if (!isDrawing) {
-        addMarkerWithCircle(e); // Agrega un marcador con círculo al hacer clic en el mapa
-    }
-},  { passive: false });
+function inverseLogslider(value) {
+    // Los valores min y max son los mismos que en la función logslider
+    var minp = 0;
+    var maxp = 100;
+    var minv = Math.log(100);
+    var maxv = Math.log(100000);
+    var scale = (maxv-minv) / (maxp-minp);
 
-console.log("script.js loaded!");
+    // Calcular la posición inversa
+    var position = (Math.log(value) - minv) / scale + minp;
+
+    return position;
+}
+
+function getDistanceUnits(value) {
+    console.log(value);
+    if (value < 1000) {
+        console.log(value + "m");
+        return value + "m";
+    } else {
+        console.log((value / 1000).toFixed(2) + "km");
+        return (value / 1000).toFixed(2) + "km";
+    }
+}
