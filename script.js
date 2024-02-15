@@ -201,7 +201,7 @@ function trackUser(position) {
     for (let i = 0; i < markers.length; i++) {
         let circle = markers[i].circle;
         if (isUserInsideCircle(userMarker.getLatLng(), circle)) {
-            console.log("Estás dentro del círculo " + circle.id);
+            // console.log("Estás dentro del círculo " + circle.id);
             vibrate(circle, userMarker.getLatLng());
 
         }
