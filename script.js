@@ -1,5 +1,3 @@
-
-
 /*
 INICIALIZACIÓN DEL MAPA Y UBICACIÓN DEL USUARIO
 */
@@ -16,7 +14,6 @@ var userMarker;
 var markers = []; // Array para almacenar los marcadores creados
 
 var zoom = 17; // Nivel de zoom inicial del mapa
-
 
 function initializeMap(position) {
     map.setView([position.coords.latitude, position.coords.longitude], zoom);
@@ -46,11 +43,9 @@ if (navigator.geolocation) {
 DIBUJO DEL ICONO DEL USUARIO Y TRACK DE SU UBICACIÓN
 */
 
-
 function drawUserIcon(position) {
     var lat = position.coords.latitude;
     var lon = position.coords.longitude;
-    console.log(lat, lon);
 
     // Si el marcador ya existe, actualiza su ubicación
     if (userMarker) {
@@ -79,12 +74,10 @@ map.on("zoomend", function () {
     zoom = map.getZoom();
 });
 
-
 /*
 DESHABILITAR ZOOM CON DOBLE CLIC
 */
 map.doubleClickZoom.disable();
-
 
 /*
 
@@ -98,17 +91,15 @@ FUNCIONAMIENTO:
 
 // constantes
 const DEFAULT_RADIUS = 100; // radio por defecto del círculo
-
-
+var circle_selected = false; // variable para saber si el círculo está seleccionado
+var circle_count = 0; // variable para saber cuantos círculos hay en el mapa
 
 // detectar dobleclic en el mapa
 map.on("dblclick", function (event) {
     var lat = event.latlng.lat;
     var lon = event.latlng.lng;
-    console.log(lat, lon);
 
     var marker = L.marker([lat, lon]).addTo(map);
-    markers.push(marker);
     // Crear un círculo alrededor del marcador
     var circle = L.circle([lat, lon], {
         color: "red",
@@ -116,46 +107,59 @@ map.on("dblclick", function (event) {
         fillOpacity: 0.5,
         radius: DEFAULT_RADIUS,
     }).addTo(map);
+    circle.id = circle_count++;
+    console.log("circulo " + circle.id + " creado");
+
+    // Guardar la estructura {marker: marker, circle: circle} en la lista markers
+    markers.push({ marker: marker, circle: circle });
+
     // Añadir evento de clic al marcador para eliminarlo
     marker.on("click", function () {
         map.removeLayer(marker);
         map.removeLayer(circle);
         markers = markers.filter(function (m) {
-            return m !== marker;
-        });
-    });
-    circle.on("click", function () {
-        console.log("click en el círculo");
-        var popup = L.popup()
-            .setLatLng([lat, lon])
-            .setContent(
-                '<input type="range" id="radius" value="' +
-                inverseLogslider(circle.getRadius()) +
-                '" min="0" max="100"><label for="radius">Radio: </label><span id="radius-value">' + getDistanceUnits(circle.getRadius()) +'</span>'
-            ).openOn(map);
-        // Añadir evento de input al selector de rango del popup
-        document.getElementById("radius").addEventListener("input", function () {
-            var inputValue = document.getElementById("radius").value;
-            var newRadius = parseInt(logslider(inputValue));
-            document.getElementById("radius-value").innerText = getDistanceUnits(newRadius);
-            circle.setRadius(newRadius);
+            return m.marker !== marker;
         });
     });
 
+    circle.on("click", function () {
+        console.log("circulo "+ circle.id + "seleccionado");
+        var popup = L.popup()
+            .setLatLng([lat, lon])
+            .setContent(
+                '<input type="range" id="radius' + circle.id + '" value="' +
+                    inverseLogslider(circle.getRadius()) +
+                    '" min="0" max="100"><label for="radius' + circle.id + '">Radio: </label><span id="radius-value'+ circle.id+'">' +
+                    getDistanceUnits(circle.getRadius()) +
+                    "</span>"
+            )
+            .openOn(map);
+        // Añadir evento de input al selector de rango del popup
+        document
+            .getElementById("radius"+ circle.id)
+            .addEventListener("input", function () {
+                var inputValue = document.getElementById("radius"+circle.id).value;
+                var newRadius = parseInt(logslider(inputValue));
+                document.getElementById("radius-value"+circle.id).innerText =
+                    getDistanceUnits(newRadius);
+                circle.setRadius(newRadius);
+            });
+    });
 });
+// Funciones para convertir el valor del rango a un valor logarítmico y viceversa
 function logslider(position) {
     // position will be between 0 and 100
     var minp = 0;
     var maxp = 100;
-  
+
     // The result should be between 100 an 100.000
     var minv = Math.log(100);
     var maxv = Math.log(100000);
-  
+
     // calculate adjustment factor
-    var scale = (maxv-minv) / (maxp-minp);
-  
-    return Math.exp(minv + scale*(position-minp));
+    var scale = (maxv - minv) / (maxp - minp);
+
+    return Math.exp(minv + scale * (position - minp));
 }
 
 function inverseLogslider(value) {
@@ -164,21 +168,20 @@ function inverseLogslider(value) {
     var maxp = 100;
     var minv = Math.log(100);
     var maxv = Math.log(100000);
-    var scale = (maxv-minv) / (maxp-minp);
+    var scale = (maxv - minv) / (maxp - minp);
 
     // Calcular la posición inversa
     var position = (Math.log(value) - minv) / scale + minp;
 
     return position;
 }
-
+// Función para convertir la distancia a km si es mayor a 1000m
 function getDistanceUnits(value) {
-    console.log(value);
     if (value < 1000) {
-        console.log(value + "m");
         return value + "m";
     } else {
-        console.log((value / 1000).toFixed(2) + "km");
         return (value / 1000).toFixed(2) + "km";
     }
 }
+
+/**/
