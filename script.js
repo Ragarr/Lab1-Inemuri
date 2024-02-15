@@ -107,7 +107,7 @@ map.on("dblclick", function (event) {
                     inverseLogslider(circle.getRadius()) +
                     '" min="0" max="100"><label for="radius' + circle.id + '">Radius: </label><span id="radius-value'+ circle.id+'">' +
                     getDistanceUnits(circle.getRadius()) +
-                    '<div style="display: flex; justify-content: space-between;"><button id="muteButton' + circle.id + '" style="flex: 1;">' + getMuteStatus(circle) + '</button><button id="deleteButton' + circle.id + '" style="flex: 1;">Eliminar</button></div>' // Agrega el botón de eliminar
+                    '</span><div style="display: flex; justify-content: space-between;"><button id="muteButton' + circle.id + '" style="flex: 1;">' + getMuteStatus(circle) + '</button><button id="deleteButton' + circle.id + '" style="flex: 1;">Eliminar</button></div>' // Agrega el botón de eliminar
             )
             .openOn(map);
         // Añadir evento de click al botón de mute/unmute
