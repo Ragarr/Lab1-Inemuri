@@ -107,7 +107,7 @@ map.on("dblclick", function (event) {
                     inverseLogslider(circle.getRadius()) +
                     '" min="0" max="100"><label for="radius' + circle.id + '">Radius: </label><span id="radius-value'+ circle.id+'">' +
                     getDistanceUnits(circle.getRadius()) +
-                    "</span><br><button id='muteButton" + circle.id + "'>"+ getMuteStatus(circle) +"</button>"
+                    '<div style="display: flex; justify-content: space-between;"><button id="muteButton' + circle.id + '" style="flex: 1;">' + getMuteStatus(circle) + '</button><button id="deleteButton' + circle.id + '" style="flex: 1;">Eliminar</button></div>' // Agrega el botón de eliminar
             )
             .openOn(map);
         // Añadir evento de click al botón de mute/unmute
@@ -115,6 +115,17 @@ map.on("dblclick", function (event) {
             circle.muted = !circle.muted;
             this.innerText = getMuteStatus(circle);
             console.log("circulo "+ circle.id + " " + getMuteStatus(circle));
+        });
+        // Añadir evento de click al botón de eliminar
+        document.getElementById('deleteButton' + circle.id).addEventListener('click', function () {
+            map.removeLayer(marker);
+            map.removeLayer(circle);
+            markers = markers.filter(function (m) {
+                return m.marker !== marker;
+            });
+            popup.remove();
+            // Aquí debes agregar el código para eliminar el marcador correspondiente
+            console.log("circulo "+ circle.id + " eliminado");
         });
         // Añadir evento de input al selector de rango del popup
         document
