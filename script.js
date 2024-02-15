@@ -196,7 +196,7 @@ function drawUserIcon(position) {
 
 
 function trackUser(position) {
-    console.log(position.coords.latitude, position.coords.longitude);
+    // console.log(position.coords.latitude, position.coords.longitude);
     drawUserIcon(position);
     for (let i = 0; i < markers.length; i++) {
         let circle = markers[i].circle;
@@ -232,11 +232,11 @@ function vibrate(circle, userPosition) {
 
     };
 
-    let distance = userPosition.distanceTo(circle.getLatLng());
+    let distance = Math.abs(userPosition.distanceTo(circle.getLatLng()));
     let maxDistance = circle.getRadius() * 0.9;
     let minDistance = circle.getRadius() * 0.1;
     let relDistance = distance / circle.getRadius();
-    console.log("distancia al circulo: " + distance);
+    // console.log("distancia al circulo: " + distance);
     console.log("distancia relativa al circulo: " + relDistance);
 
     if (relDistance < 0.25) {
