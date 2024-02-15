@@ -39,32 +39,6 @@ if (navigator.geolocation) {
     alert("Geolocation is not supported by this browser.");
 }
 
-/* 
-DIBUJO DEL ICONO DEL USUARIO Y TRACK DE SU UBICACIÓN
-*/
-
-function drawUserIcon(position) {
-    var lat = position.coords.latitude;
-    var lon = position.coords.longitude;
-
-    // Si el marcador ya existe, actualiza su ubicación
-    if (userMarker) {
-        userMarker.setLatLng([lat, lon]);
-    } else {
-        // Si no, crea un nuevo marcador y añádelo al mapa
-        userMarker = L.marker([lat, lon], { icon: userIcon }).addTo(map);
-    }
-
-    // Centrar el mapa en la nueva ubicación
-    map.setView([lat, lon], zoom);
-}
-
-// Usar la función drawUserIcon en watchPosition
-watchPositionId = navigator.geolocation.watchPosition(
-    drawUserIcon,
-    onPositionError,
-    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-);
 
 /*
 CONTROL DEL ZOOM
@@ -96,12 +70,12 @@ var circle_count = 0; // variable para saber cuantos círculos hay en el mapa
 
 // detectar dobleclic en el mapa
 map.on("dblclick", function (event) {
-    var lat = event.latlng.lat;
-    var lon = event.latlng.lng;
+    let lat = event.latlng.lat;
+    let lon = event.latlng.lng;
 
-    var marker = L.marker([lat, lon]).addTo(map);
+    let marker = L.marker([lat, lon]).addTo(map);
     // Crear un círculo alrededor del marcador
-    var circle = L.circle([lat, lon], {
+    let circle = L.circle([lat, lon], {
         color: "red",
         fillColor: "#f03",
         fillOpacity: 0.5,
@@ -123,8 +97,8 @@ map.on("dblclick", function (event) {
     });
 
     circle.on("click", function () {
-        console.log("circulo "+ circle.id + "seleccionado");
-        var popup = L.popup()
+        console.log("circulo "+ circle.id + " seleccionado");
+        let popup = L.popup()
             .setLatLng([lat, lon])
             .setContent(
                 '<input type="range" id="radius' + circle.id + '" value="' +
@@ -138,8 +112,8 @@ map.on("dblclick", function (event) {
         document
             .getElementById("radius"+ circle.id)
             .addEventListener("input", function () {
-                var inputValue = document.getElementById("radius"+circle.id).value;
-                var newRadius = parseInt(logslider(inputValue));
+                let inputValue = document.getElementById("radius"+circle.id).value;
+                let newRadius = parseInt(logslider(inputValue));
                 document.getElementById("radius-value"+circle.id).innerText =
                     getDistanceUnits(newRadius);
                 circle.setRadius(newRadius);
@@ -149,29 +123,29 @@ map.on("dblclick", function (event) {
 // Funciones para convertir el valor del rango a un valor logarítmico y viceversa
 function logslider(position) {
     // position will be between 0 and 100
-    var minp = 0;
-    var maxp = 100;
+    let minp = 0;
+    let maxp = 100;
 
     // The result should be between 100 an 100.000
-    var minv = Math.log(100);
-    var maxv = Math.log(100000);
+    let minv = Math.log(100);
+    let maxv = Math.log(100000);
 
     // calculate adjustment factor
-    var scale = (maxv - minv) / (maxp - minp);
+    let scale = (maxv - minv) / (maxp - minp);
 
     return Math.exp(minv + scale * (position - minp));
 }
 
 function inverseLogslider(value) {
     // Los valores min y max son los mismos que en la función logslider
-    var minp = 0;
-    var maxp = 100;
-    var minv = Math.log(100);
-    var maxv = Math.log(100000);
-    var scale = (maxv - minv) / (maxp - minp);
+    let minp = 0;
+    let maxp = 100;
+    let minv = Math.log(100);
+    let maxv = Math.log(100000);
+    let scale = (maxv - minv) / (maxp - minp);
 
     // Calcular la posición inversa
-    var position = (Math.log(value) - minv) / scale + minp;
+    let position = (Math.log(value) - minv) / scale + minp;
 
     return position;
 }
@@ -184,4 +158,83 @@ function getDistanceUnits(value) {
     }
 }
 
-/**/
+/*
+DETECTAR SI EL USUARIO ESTA DENRO DE UN CIRCULO
+*/
+
+// Función para detectar si el usuario está dentro de un círculo
+function isUserInsideCircle(userPosition, circle) {
+    /* userPosition es un objeto LatLng con las coordenadas del usuario
+    circle es un objeto Circle con las propiedades del círculo */
+    let circleCenter = circle.getLatLng(); // Coordenadas del centro del círculo
+    let circleRadius = circle.getRadius(); // Radio del círculo
+    return userPosition.distanceTo(circleCenter) < circleRadius;
+
+}
+
+
+/* 
+DIBUJO DEL ICONO DEL USUARIO Y TRACK DE SU UBICACIÓN
+*/
+
+function drawUserIcon(position) {
+    let lat = position.coords.latitude;
+    let lon = position.coords.longitude;
+
+    // Si el marcador ya existe, actualiza su ubicación
+    if (userMarker) {
+        userMarker.setLatLng([lat, lon]);
+    } else {
+        // Si no, crea un nuevo marcador y añádelo al mapa
+        userMarker = L.marker([lat, lon], { icon: userIcon }).addTo(map);
+    }
+
+    // Centrar el mapa en la nueva ubicación
+    map.setView([lat, lon], zoom);
+}
+
+
+
+function trackUser(position) {
+    console.log(position.coords.latitude, position.coords.longitude);
+    drawUserIcon(position);
+    for (let i = 0; i < markers.length; i++) {
+        let circle = markers[i].circle;
+        if (isUserInsideCircle(userMarker.getLatLng(), circle)) {
+            console.log("Estás dentro del círculo " + circle.id);
+            vibrate(circle, userMarker.getLatLng());
+
+        }
+    }
+}
+
+
+
+// Usar la función drawUserIcon en watchPosition
+watchPositionId = navigator.geolocation.watchPosition(
+    trackUser,
+    onPositionError,
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+);
+
+
+// funcion de vibracion si el usuario esta dentro de un circulo
+
+function vibrate(circle, userPosition) {
+    // vibra cada vez mas en funcion de la distancia al centro del circulo
+    // vibracion minima cuando el usuario esta en el borde del circulo
+    // vibracion maxima cuando el usuario esta a un 90% el centro del circulo
+    let distance = userPosition.distanceTo(circle.getLatLng());
+    let maxDistance = circle.getRadius() * 0.9;
+    let minDistance = circle.getRadius() * 0.1;
+    let vibration = 0;
+    if (distance < minDistance) {
+        vibration = 0;
+    } else if (distance > maxDistance) {
+        vibration = 1000;
+    } else {
+        vibration = 1000 * (1 - (distance - minDistance) / (maxDistance - minDistance));
+    }
+    console.log("vibrando");
+    navigator.vibrate(vibration);
+}
