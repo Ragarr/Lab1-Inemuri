@@ -82,6 +82,7 @@ map.on("dblclick", function (event) {
         radius: DEFAULT_RADIUS,
     }).addTo(map);
     circle.id = circle_count++;
+    circle.muted = false;
     console.log("circulo " + circle.id + " creado");
 
     // Guardar la estructura {marker: marker, circle: circle} en la lista markers
@@ -98,6 +99,7 @@ map.on("dblclick", function (event) {
 
     circle.on("click", function () {
         console.log("circulo "+ circle.id + " seleccionado");
+        const getMuteStatus = (circle) => (!circle.muted ? "Mute" : "Unmute");
         let popup = L.popup()
             .setLatLng([lat, lon])
             .setContent(
@@ -105,9 +107,15 @@ map.on("dblclick", function (event) {
                     inverseLogslider(circle.getRadius()) +
                     '" min="0" max="100"><label for="radius' + circle.id + '">Radius: </label><span id="radius-value'+ circle.id+'">' +
                     getDistanceUnits(circle.getRadius()) +
-                    "</span>"
+                    "</span><br><button id='muteButton" + circle.id + "'>"+ getMuteStatus(circle) +"</button>"
             )
             .openOn(map);
+        // Añadir evento de click al botón de mute/unmute
+        document.getElementById('muteButton' + circle.id).addEventListener('click', function () {
+            circle.muted = !circle.muted;
+            this.innerText = getMuteStatus(circle);
+            console.log("circulo "+ circle.id + " " + getMuteStatus(circle));
+        });
         // Añadir evento de input al selector de rango del popup
         document
             .getElementById("radius"+ circle.id)
@@ -221,6 +229,11 @@ watchPositionId = navigator.geolocation.watchPosition(
 // funcion de vibracion si el usuario esta dentro de un circulo
 
 function vibrate(circle, userPosition) {
+
+    if (circle.muted) {
+        console.log("circulo " + circle.id + " silenciado");
+        return;
+    }
     // vibra cada vez mas en funcion de la distancia al centro del circulo
     // vibracion minima cuando el usuario esta en el borde del circulo
     // vibracion maxima cuando el usuario esta a un 90% el centro del circulo
