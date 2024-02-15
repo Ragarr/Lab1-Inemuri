@@ -64,7 +64,7 @@ FUNCIONAMIENTO:
 */
 
 // constantes
-const DEFAULT_RADIUS = 100; // radio por defecto del círculo
+const DEFAULT_RADIUS = 500; // radio por defecto del círculo
 var circle_selected = false; // variable para saber si el círculo está seleccionado
 var circle_count = 0; // variable para saber cuantos círculos hay en el mapa
 
