@@ -225,9 +225,9 @@ function vibrate(circle, userPosition) {
     // vibracion minima cuando el usuario esta en el borde del circulo
     // vibracion maxima cuando el usuario esta a un 90% el centro del circulo
     vibratePatterns = {
-        far: [100, 200],
-        medium: [100, 100, 100, 100],
-        close: [200, 100, 200, 100],
+        far: [50, 200],
+        medium: [50, 100, 50, 100],
+        close: [100, 100, 100, 100],
         veryClose: [200, 50, 200, 50],
 
     };
