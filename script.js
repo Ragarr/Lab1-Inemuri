@@ -105,7 +105,7 @@ map.on("dblclick", function (event) {
             .setContent(
                 '<input type="range" id="radius' + circle.id + '" value="' +
                     inverseLogslider(circle.getRadius()) +
-                    '" min="0" max="100"><label for="radius' + circle.id + '">Radio: </label><span id="radius-value'+ circle.id+'">' +
+                    '" min="0" max="100"><label for="radius' + circle.id + '">Radius: </label><span id="radius-value'+ circle.id+'">' +
                     getDistanceUnits(circle.getRadius()) +
                     "</span><br><button id='muteButton" + circle.id + "'>"+ getMuteStatus(circle) +"</button>"
             )
@@ -266,3 +266,28 @@ function vibrate(circle, userPosition) {
     }
     navigator.vibrate(vibration);
 }
+
+
+
+/*
+HELP BUTTON
+*/
+var helpMenu = document.getElementById("help-menu");
+var helpBtn = document.getElementById("help-btn");
+var closeBtn = document.getElementById("close-help");
+var isHelpMenuOpen = false;
+
+helpBtn.addEventListener("click", function () {
+    if (isHelpMenuOpen) {
+        helpMenu.style.display = "none";
+    } else {
+        helpMenu.style.display = "block";
+    }
+    isHelpMenuOpen = !isHelpMenuOpen;
+});
+
+closeBtn.addEventListener("click", function () {
+    helpMenu.style.display = "none";
+    isHelpMenuOpen = false;
+});
+
