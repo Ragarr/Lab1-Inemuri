@@ -13,7 +13,7 @@ var userIcon = L.icon({
 var userMarker;
 var markers = []; // Array para almacenar los marcadores creados
 
-var zoom = 17; // Nivel de zoom inicial del mapa
+var zoom = 15; // Nivel de zoom inicial del mapa
 
 function initializeMap(position) {
     map.setView([position.coords.latitude, position.coords.longitude], zoom);
