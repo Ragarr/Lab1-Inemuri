@@ -303,7 +303,7 @@ closeBtn.addEventListener("click", function () {
 });
 
 
-/*
+/* TODO:
 Change map to dark mode with 
  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}', {
 	minZoom: 0,
